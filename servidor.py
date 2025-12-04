@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status #1-12 se agregó Depends y status
+from fastapi import FastAPI, HTTPException, Depends, status, Request #1-12 se agregó Depends y status
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials #1-12 se agregó
 from typing import Optional, Dict, Deque #1-12 se agregó Dict
@@ -46,10 +46,12 @@ security = HTTPBasic()
 
 USUARIOS: Dict[str, str] = {
     "ivan": "ivan123",
-    "user": "user_1" 
+    "user": "user_1", 
+    "u": "123"
 }
 
 # Autentificación de usuarios
+
 def verificar_credenciales(credenciales: HTTPBasicCredentials = Depends(security)) -> str: #Depends(security), llama a HTTPBasic() y pasa credenciales a la función
     pwd_correcta = USUARIOS.get(credenciales.username)
     if not pwd_correcta or not secrets.compare_digest(credenciales.password, pwd_correcta): #secrets.compare_digest() compara strings sin dar pistas de duración.
@@ -60,8 +62,8 @@ def verificar_credenciales(credenciales: HTTPBasicCredentials = Depends(security
         )
     return credenciales.username  # Devuelve el nombre del usuario autenticado
 
-#-------------------------------------------------------------------------------
-#Limitador
+# #-------------------------------------------------------------------------------
+# #Limitador
 
 VENTANA = timedelta(seconds=1)   # Ventana de tiempo
 MAX_PETICIONES = 10             # Máximo de peticiones dentro de la ventana
@@ -92,6 +94,10 @@ async def limitador(request: Request, call_next):
 
 #---------------------------------------------------------------------------
 
+@app.get("/protegido")
+def protegido(usuario: str = Depends(verificar_credenciales)):
+    return {"msg": f"Hola {usuario}, acceso permitido"}
+
 # Obtener todas las películas
 @app.get("/peliculas")
 def mostrar_peliculas():
@@ -101,14 +107,35 @@ def mostrar_peliculas():
 @app.get("/peliculas/{pelicula_titulo}")
 def mostrar_pelicula(pelicula_titulo: str):
     datos = cargar_datos()
+    coincidencias = []
+
     for pelicula in datos:
-        if pelicula["title"] == pelicula_titulo:
-            return pelicula
-    raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No encontrado")
+        if pelicula["title"].lower() == pelicula_titulo.lower():
+            margen = 6*" "
+            no_disp = "\033[3mNo disponible\033[0m"
+
+            texto = (
+                4* " " + f"{'-'*55}\n"
+                + margen + f"Título: {pelicula['title']}\n"
+                + margen + f"Año: {pelicula['year']}\n"
+                + margen + f"Géneros: {', '.join(pelicula['genres']) if pelicula['genres'] else no_disp}\n"
+                + margen + f"Elenco: {', '.join(pelicula['cast']) if pelicula['cast'] else no_disp}\n"
+                + margen + f"Href: {pelicula['href']  if pelicula['href'] else no_disp}\n"
+                + 4* " " + f"{'-'*55}\n"
+            )
+
+            coincidencias.append(texto)
+
+    if coincidencias:
+        return "\n".join(coincidencias)
+
+    raise HTTPException(status_code=404, detail="No encontrado")
+
 
 # Agregar una nueva película
 @app.post("/peliculas")
-def agregar_pelicula(pelicula: Pelicula, usuario: str = Depends(verificar_credenciales)):
+#def agregar_pelicula(pelicula: Pelicula, usuario: str = Depends(verificar_credenciales)):
+def agregar_pelicula(pelicula: Pelicula):
     datos = cargar_datos()
     datos.append(pelicula.model_dump()) # el método model.dump() es necesario para transformar el objeto película en un diccionario
     guardar_datos(datos)
@@ -116,7 +143,8 @@ def agregar_pelicula(pelicula: Pelicula, usuario: str = Depends(verificar_creden
 
 # Borrar película por título
 @app.delete("/peliculas")
-def borrar_pelicula(pelicula_titulo: str, usuario: str = Depends(verificar_credenciales)):
+#def borrar_pelicula(pelicula_titulo: str, usuario: str = Depends(verificar_credenciales)):
+def borrar_pelicula(pelicula_titulo: str):
     datos = cargar_datos()
     for pelicula in datos:
         if pelicula["title"] == pelicula_titulo:
