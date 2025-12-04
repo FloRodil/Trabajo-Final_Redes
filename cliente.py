@@ -1,29 +1,21 @@
 import requests
 import getpass
 import os
-from requests.auth import HTTPBasicAuth
+# from requests.auth import HTTPBasicAuth
 #from servidor import verificar_credenciales
 
 servidor_url = "http://127.0.0.1:8000"
+
 
 def obtener_peliculas():
     respuesta = requests.get(f"{servidor_url}/peliculas")
     return (respuesta.json())
 
+
 def obtener_pelicula():
     pelicula_titulo = input(4*" " + "Título de la película: ")
     respuesta = requests.get(f"{servidor_url}/peliculas/" + pelicula_titulo)
     return (respuesta.json())
-
-# ------------Agregado 1-12 ---------------
-
-# def autentificar():
-#     usuario = input("Usuario: ")
-#     contraseña = getpass.getpass("Contraseña: ")
-#     return usuario, contraseña
-# respuesta = requests.get(url, auth=(usuario, clave))
-
-#------------------------------------------
 
 
 def agregar_pelicula():
@@ -71,15 +63,16 @@ def agregar_pelicula():
     respuesta = requests.post(f"{servidor_url}/peliculas/", json = pelicula)
     return (respuesta.json())
 
+
 def borrar_pelicula():
     titulo = input("Ingrese el título de la película a borrar: ")
     respuesta = requests.delete(f"{servidor_url}/peliculas/", params = {"pelicula_titulo": titulo})
     return (respuesta.json())
 
+
 def limpiar_pantalla():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-nombre_usuario = "invitado"  
 
 def menu_inicial():
     limpiar_pantalla()
@@ -98,7 +91,6 @@ def menu_inicial():
     print()
 
     opcion = input(4*" " + "Ingrese el número de la opción seleccionada: ")
-
     if opcion == "1":
         print(obtener_peliculas())
     elif opcion == "2":
@@ -139,7 +131,6 @@ def acceder():
     print(4*" " + '*** ERROR ***')
 
 
-
 def menu_ppal(n_usuario):
     limpiar_pantalla()
     # print(os.name)
@@ -174,25 +165,6 @@ def menu_ppal(n_usuario):
         print()
     else:
         print(4*" " + "Opción no válida")
-
-# def menu():
-#     print("Opción 1: Obtener datos de todas las películas")
-#     print("Opción 2: Obtener datos de una película por su título")
-#     print("Opción 3: Agregar datos de una película")
-#     print("Opción 4: Borrar una película")
-
-#     opcion = input("Ingrese el número de la opción seleccionada: ")
-
-#     if opcion == "1":
-#         print(obtener_peliculas())
-#     elif opcion == "2":
-#         print(obtener_pelicula())
-#     elif opcion == "3":
-#         print(agregar_pelicula())
-#     elif opcion == "4":
-#         print(borrar_pelicula())
-#     else:
-#         print("Opción no válida")
 
 if __name__ =="__main__":
     menu_inicial()
