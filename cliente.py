@@ -11,7 +11,7 @@ def obtener_peliculas():
     return (respuesta.json())
 
 def obtener_pelicula():
-    pelicula_titulo = input("Título de la película: ")
+    pelicula_titulo = input(4*" " + "Título de la película: ")
     respuesta = requests.get(f"{servidor_url}/peliculas/" + pelicula_titulo)
     return (respuesta.json())
 
@@ -86,8 +86,7 @@ def menu_inicial():
     # print(os.name)
     print()
     print(3*" " + "┌" + 55*"─" + "┐")
-    # print(3*" " + "│" + 5*" " + "MENU" + (29-len(nombre_usuario))*" " + "hola: (" + nombre_usuario + ")" + 4*" " + "│")
-    print(3*" " + "│" + 5*" " + "MENU" + 32*" " + "(invitado)" + 4*" " + "│")
+    print(3*" " + "│" + 3*" " + "MENU" + 34*" " + "\033[3m(invitado)\033[0m" + 4*" " + "│")
     print(3*" " + "├" + 55*"─" + "┤")
     print(3*" " + "│" + 55*" " + "│")
     print(3*" " + "│" + 3*" " + "1 - Obtener datos de todas las películas" + 12*" " + "│")
@@ -108,31 +107,37 @@ def menu_inicial():
         print(4*" " + "Opción no válida")
 
 def acceder():
-    limpiar_pantalla()
-    print()
-    print(3*" " + "┌" + 55*"─" + "┐")
-    print(3*" " + "│" + 5*" " + "ACCEDER" + 43*" " + "│")
-    print(3*" " + "├" + 55*"─" + "┤")
-    print(3*" " + "│" + 55*" " + "│")
-    print(3*" " + "│" + 3*" " + "Ingresá tu usuario y contraseña" + 21*" " + "│")
-    print(3*" " + "│" + 55*" " + "│")
-    print(3*" " + "└" + 55*"─" + "┘")
-    print()
-    usuario_str = input(4*" " + "Usuario: ")
-    pass_str = input(4*" " + "Contraseña: ")
-    respuesta = requests.get(f"{servidor_url}/protegido", auth=(usuario_str, pass_str))
-    
+    intentos = 3
+    while(intentos > 0):
+        limpiar_pantalla()
+        print()
+        print(3*" " + "┌" + 55*"─" + "┐")
+        print(3*" " + "│" + 3*" " + "ACCEDER" + 45*" " + "│")
+        print(3*" " + "├" + 55*"─" + "┤")
+        print(3*" " + "│" + 55*" " + "│")
+        print(3*" " + "│" + 3*" " + "Ingresá tu Usuario y Contraseña" + 21*" " + "│")
+        print(3*" " + "│" + 55*" " + "│")
+        print(3*" " + "└" + 55*"─" + "┘")
+        print()
+        usuario_str = input(4*" " + "Usuario: ")
+        pass_str = input(4*" " + "Contraseña: ")
+        print()
+        respuesta = requests.get(f"{servidor_url}/protegido", auth=(usuario_str, pass_str))
+ 
+        if respuesta.status_code == 200:
+            menu_ppal(usuario_str)
+            # print(respuesta)
+            return
+            
+        intentos -= 1
+        print(4*" " + 42*"*")
+        print(4*" " + "*** Usuario y/o Contraseña INCORRECTOS ***")
+        print(4*" " + f"***   Quedan: {intentos} intento/s restante/s   ***")
+        print(4*" " + 42*"*")
+        print()
+        os.system("pause")
+    print(4*" " + '*** ERROR ***')
 
-    # if True: #cambiar por la función de validación
-    #     #menu_ppal(usuario_str)
-    #     print(respuesta)
-    # else:
-    #     prin("error")
-    if respuesta.status_code == 200:
-        menu_ppal(usuario_str)
-        print(respuesta)
-    else:
-        print("usuario no válido")
 
 
 def menu_ppal(n_usuario):

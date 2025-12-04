@@ -121,7 +121,7 @@ def mostrar_pelicula(pelicula_titulo: str):
                 + margen + f"Géneros: {', '.join(pelicula['genres']) if pelicula['genres'] else no_disp}\n"
                 + margen + f"Elenco: {', '.join(pelicula['cast']) if pelicula['cast'] else no_disp}\n"
                 + margen + f"Href: {pelicula['href']  if pelicula['href'] else no_disp}\n"
-                + 4* " " + f"{'-'*55}\n"
+                # + 4* " " + f"{'-'*55}\n"
             )
 
             coincidencias.append(texto)
