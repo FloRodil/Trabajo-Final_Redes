@@ -36,14 +36,41 @@ class Pelicula(BaseModel):
 def mostrar_peliculas():
     return cargar_datos()
 
-# Obtener una película por su título
+# Obtener una película por su título <<< MODIFICADO
 @app.get("/peliculas/{pelicula_titulo}")
 def mostrar_pelicula(pelicula_titulo: str):
     datos = cargar_datos()
+    coincidencias = []
+
     for pelicula in datos:
-        if pelicula["title"] == pelicula_titulo:
-            return pelicula
-    raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No encontrado")
+        if pelicula["title"].lower() == pelicula_titulo.lower():
+            margen = 6*" "
+
+            texto = (
+                4* " " + f"{'-'*55}\n"
+                + margen + f"Título: {pelicula['title']}\n"
+                + margen + f"Año: {pelicula['year']}\n"
+                + margen + f"Géneros: {', '.join(pelicula['genres']) if pelicula['genres'] else '\033[3mNo disponible\033[0m'}\n"
+                + margen + f"Elenco: {', '.join(pelicula['cast']) if pelicula['cast'] else '\033[3mNo disponible\033[0m'}\n"
+                + margen + f"Href: {pelicula['href'] if pelicula['href'] else '\033[3mNo disponible\033[0m'}\n"
+                + 4* " " + f"{'-'*55}\n"
+            )
+
+            coincidencias.append(texto)
+
+    if coincidencias:
+        return "\n".join(coincidencias)
+
+    raise HTTPException(status_code=404, detail="No encontrado")
+
+# @app.get("/peliculas/{pelicula_titulo}")
+# def mostrar_pelicula(pelicula_titulo: str):
+#     datos = cargar_datos()
+#     for pelicula in datos:
+#         if pelicula["title"] == pelicula_titulo:
+#             return pelicula
+#     raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No encontrado")
+
 
 # Agregar una nueva película
 @app.post("/peliculas")
