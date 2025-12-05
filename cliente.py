@@ -86,8 +86,8 @@ def editar_pelicula(titulo: str, anio: str):
 
     pelicula = resp.json()
 
-    print("\n=== EDITAR PELÍCULA ===")
-    print(f"Título actual: {pelicula['title']}")
+    print(4*" " + "\n=== EDITAR PELÍCULA ===")
+    print(4*" " + f"Título actual: {pelicula['title']}")
     nuevo_titulo = input(4*" " + "Nuevo título (enter para mantener): ").strip()
 
     print(f"Año actual: {pelicula['year']}")
