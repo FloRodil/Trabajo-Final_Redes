@@ -24,29 +24,76 @@ def obtener_pelicula():
     return (respuesta.json())
 
 
+# def agregar_pelicula():
+#     titulo = input("Ingrese el título: ")
+#     año = int(input("Ingrese el año: "))
+#     elenco = []
+#     cond = input("Ingresar actor?[y/n]: ")
+#     if cond == "n":
+#         elenco = None
+#     else: 
+#         while cond == "y":
+#             actor = input("Ingrese nombre del actor: ")
+#             elenco.append(actor)
+#             cond = input("Ingresar otro actor?[y/n]: ")
+#     generos = []
+#     cond1 = input("Ingresar un género?[y/n]: ")
+#     if cond1 == "n":
+#         generos = None
+#     else: 
+#         while cond1 == "y":
+#             genero = input("Ingrese un género: ")
+#             generos.append(genero)
+#             cond1 = input("Ingresar otro género?[y/n]: ")
+#     href = input ("Ingrese href: ")
+#     thumbnail = input ("Ingrese url de la miniatura: ")
+#     # ancho =  input ("Ingrese ancho de la miniatura: ")
+#     # if ancho:
+#     #     thumbnail_width = int(ancho)
+#     # else:
+#     #     thumbnail_width = None
+#     # alto = input ("Ingrese ancho de la miniatura: ")
+#     # if alto:
+#     #     thumbnail_height = int(alto)
+#     # else:
+#     #     thumbnail_height = None
+#     pelicula = {
+#         "title": titulo, 
+#         "year": año, 
+#         "cast": elenco, 
+#         "genres": generos, 
+#         "href": href, 
+#         "thumbnail": thumbnail, 
+#         "thumbnail_width": 320, 
+#         "thumbnail_height": 320}
+#     respuesta = requests.post(f"{servidor_url}/peliculas/", json = pelicula)
+#     return (respuesta.json())
+
+
 def agregar_pelicula():
-    titulo = input("Ingrese el título: ")
-    año = int(input("Ingrese el año: "))
+    print(4*" " + "\n=== EDITAR PELÍCULA ===")
+    titulo = input(4*" " + "Ingrese el título: ").strip()
+    año = int(input(4*" " + "Ingrese el año: "))
     elenco = []
-    cond = input("Ingresar actor?[y/n]: ")
+    cond = input(4*" " + "Ingresa actor?[y/n]: ")
     if cond == "n":
         elenco = None
     else: 
         while cond == "y":
-            actor = input("Ingrese nombre del actor: ")
+            actor = input(4*" " + "Ingrese nombre del actor: ").strip()
             elenco.append(actor)
-            cond = input("Ingresar otro actor?[y/n]: ")
+            cond = input(4*" " + "Ingresa otro actor?[y/n]: ")
     generos = []
-    cond1 = input("Ingresar un género?[y/n]: ")
+    cond1 = input(4*" " + "Ingresa un género?[y/n]: ")
     if cond1 == "n":
         generos = None
     else: 
         while cond1 == "y":
-            genero = input("Ingrese un género: ")
+            genero = input(4*" " + "Ingrese un género: ").strip()
             generos.append(genero)
-            cond1 = input("Ingresar otro género?[y/n]: ")
-    href = input ("Ingrese href: ")
-    thumbnail = input ("Ingrese url de la miniatura: ")
+            cond1 = input(4*" " + "Ingresar otro género?[y/n]: ")
+    href = input (4*" " + "Ingrese href (enter para seguir): ")
+    thumbnail = input (4*" " + "Ingrese url de la miniatura: ")
     # ancho =  input ("Ingrese ancho de la miniatura: ")
     # if ancho:
     #     thumbnail_width = int(ancho)
@@ -68,7 +115,6 @@ def agregar_pelicula():
         "thumbnail_height": 320}
     respuesta = requests.post(f"{servidor_url}/peliculas/", json = pelicula)
     return (respuesta.json())
-
 
 def borrar_pelicula():
     titulo = input("Ingrese el título de la película a borrar: ")

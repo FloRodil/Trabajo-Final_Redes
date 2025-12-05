@@ -167,10 +167,11 @@ def agregar_pelicula(pelicula: Pelicula):
 def borrar_pelicula(pelicula_titulo: str):
     datos = cargar_datos()
     for pelicula in datos:
-        if pelicula["title"] == pelicula_titulo:
+        if pelicula["title"].lower() == pelicula_titulo.lower():
+            print(pelicula["title"].lower())
             datos.remove(pelicula)
             guardar_datos(datos)
-        return{"mensaje": "Película borrada", "Título": pelicula_titulo}
+            return{"mensaje": "Película borrada", "Título": pelicula_titulo}
 
 
 # Editar película por título y año
