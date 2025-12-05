@@ -1,6 +1,7 @@
 import json
 import uvicorn
 import secrets #1-12 se agregó
+import os
 from fastapi import FastAPI, HTTPException, Depends, status, Request #1-12 se agregó Depends y status
 # from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials #1-12 se agregó
@@ -94,11 +95,14 @@ async def limitador(request: Request, call_next):
     respuesta = await call_next(request) #continua el proceso
     return respuesta
 
-#---------------------------------------------------------------------------
 
 @app.get("/protegido")
 def protegido(usuario: str = Depends(verificar_credenciales)):
-    return {"msg": f"Hola {usuario}, acceso permitido"}
+    return
+    # return {"msg": f"Hola {usuario}, acceso permitido"}
+
+#---------------------------------------------------------------------------
+
 
 # Obtener todas las películas
 @app.get("/peliculas")
