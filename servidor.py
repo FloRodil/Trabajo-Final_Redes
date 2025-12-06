@@ -1,6 +1,6 @@
 import json
 import uvicorn
-import secrets #1-12 se agregó
+import secrets 
 from fastapi import FastAPI, HTTPException, Depends, status, Request #1-12 se agregó Depends y status
 # from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials #1-12 se agregó
@@ -30,13 +30,15 @@ def guardar_datos(datos):
 class Pelicula(BaseModel):
     title: str
     year: int
-    cast: Optional[list] = None
-    genres: Optional[list] = None
+    # cast: Optional[list] = None
+    cast: Optional[list] = []
+    # genres: Optional[list] = None
+    genres: Optional[list] = []
     href: Optional[str] = None
     extract: Optional[str] = None
     thumbnail: Optional[str] = None
-    # thumbnail_width: Optional[int] = 320
-    # thumbnail_height: Optional[int] = 320
+    thumbnail_width: Optional[int] = 320
+    thumbnail_height: Optional[int] = 320
 
 # -------Agregado 1-12 -------------------------------------------------------
 
@@ -49,11 +51,10 @@ security = HTTPBasic()
 USUARIOS: Dict[str, str] = {
     "ivan": "ivan123",
     "user": "user_1", 
-    "u": "123"
+    "u": "1"
 }
 
 # Autentificación de usuarios
-
 def verificar_credenciales(credenciales: HTTPBasicCredentials = Depends(security)) -> str: #Depends(security), llama a HTTPBasic() y pasa credenciales a la función
     pwd_correcta = USUARIOS.get(credenciales.username)
     if not pwd_correcta or not secrets.compare_digest(credenciales.password, pwd_correcta): #secrets.compare_digest() compara strings sin dar pistas de duración.
@@ -95,10 +96,21 @@ async def limitador(request: Request, call_next):
     return respuesta
 
 #---------------------------------------------------------------------------
+# Existe película por su título y año  
+@app.get("/peliculas/{titulo}/{anio}")
+def existe_pelicula(titulo: str, anio: int):
+    datos = cargar_datos()
+
+    for pelicula in datos:
+        if pelicula["title"].lower() == titulo.lower() and pelicula["year"] == anio:
+            return True
+    return False
+
 
 @app.get("/protegido")
 def protegido(usuario: str = Depends(verificar_credenciales)):
     return {"msg": f"Hola {usuario}, acceso permitido"}
+
 
 # Obtener todas las películas
 @app.get("/peliculas")
@@ -131,8 +143,7 @@ def mostrar_pelicula(pelicula_titulo: str):
 
     if coincidencias:
         return "\n".join(coincidencias)
-
-    raise HTTPException(status_code=404, detail="No encontrado")
+    raise HTTPException(status_code=404, detail="Película no encontrada...")
 
 
 # Obtener una película por su título y año  
@@ -154,19 +165,22 @@ def agregar_pelicula(pelicula: Pelicula):
     datos = cargar_datos()
     datos.append(pelicula.model_dump()) # el método model.dump() es necesario para transformar el objeto película en un diccionario
     guardar_datos(datos)
-    return{"mensaje": "Película agregada", "Película": pelicula}
+    return(f"\n    Película '{pelicula.title}' agregada EXITOSAMENTE.")
 
-
-# Borrar película por título
+    
+# Borrar película por título y año
 @app.delete("/peliculas")
 #def borrar_pelicula(pelicula_titulo: str, usuario: str = Depends(verificar_credenciales)):
-def borrar_pelicula(pelicula_titulo: str):
+def borrar_pelicula(pelicula_titulo: str, pelicula_anio: int):
     datos = cargar_datos()
     for pelicula in datos:
-        if pelicula["title"] == pelicula_titulo:
+        if pelicula["title"].lower() == pelicula_titulo.lower() and pelicula["year"] == pelicula_anio:
+            # print(pelicula["title"].lower())
             datos.remove(pelicula)
             guardar_datos(datos)
-        return{"mensaje": "Película borrada", "Título": pelicula_titulo}
+            return {"mensaje": "*** Película '{pelicula['title']}' BORRADA EXITOSAMENTE. ***"}
+
+    # return(4*" " + f"Película {pelicula_titulo} no encontrada...")
 
 
 # Editar película por título y año
