@@ -165,6 +165,7 @@ def menu_inicial():
     print(3*" " + "│" + 3*" " + "2 - Acceder (log-in)" + 32*" " + "│")
     print(3*" " + "│" + 55*" " + "│")
     print(3*" " + "│" + 3*" " + "? - Ayuda" + 43*" " + "│")
+    print(3*" " + "│" + 3*" " + "X - Salir" + 43*" " + "│")
     print(3*" " + "│" + 55*" " + "│")
     print(3*" " + "└" + 55*"─" + "┘")
     print()
@@ -172,10 +173,21 @@ def menu_inicial():
     opcion = input(4*" " + "Ingrese el número de la opción seleccionada: ")
     if opcion == "1":
         print(obtener_peliculas())
+
     elif opcion == "2":
         acceder()
+
+    elif opcion == "?":
+        return ""
+
+    elif opcion.lower() == "x":
+        print("\n    Saliendo de la api...")
+        exit()
+    
     else:
-        print(4*" " + "Opción no válida")
+        print()
+        print(4*" " + "*** Opción no válida ***")
+        input("\nPresione ENTER para continuar...")
         menu_inicial()
 
 
@@ -228,6 +240,7 @@ def menu_ppal(n_usuario):
         print(3*" " + "│" + 3*" " + "4 - Editar datos de una película" + 20*" " + "│")
         print(3*" " + "│" + 3*" " + "5 - Borrar una película" + 29*" " + "│")
         print(3*" " + "│" + 55*" " + "│")
+        print(3*" " + "│" + 3*" " + "6 - Log-Out" + 41*" " + "│")
         print(3*" " + "│" + 3*" " + "X - Salir" + 43*" " + "│")
         print(3*" " + "│" + 55*" " + "│")
         print(3*" " + "└" + 55*"─" + "┘")
@@ -237,7 +250,7 @@ def menu_ppal(n_usuario):
         print()
 
         if opcion == "1":
-            obtener_peliculas()
+            print(obtener_peliculas())
             input("\nPresione ENTER para continuar...")
 
         elif opcion == "2":
@@ -257,8 +270,12 @@ def menu_ppal(n_usuario):
             print(borrar_pelicula())
             input("\nPresione ENTER para continuar...")
 
+        elif opcion == "6":
+            menu_inicial()
+            input("\nPresione ENTER para continuar...")
+
         elif opcion.lower() == "x":
-            print("\nSaliendo de la api...")
+            print("\n    Saliendo de la api...")
             break  # ← rompe el bucle y sale del menú
 
         else:

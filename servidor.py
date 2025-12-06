@@ -1,6 +1,7 @@
 import json
 import uvicorn
-import secrets 
+import secrets
+import bcrypt #transforma string en hashes
 from fastapi import FastAPI, HTTPException, Depends, status, Request #1-12 se agregó Depends y status
 # from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials #1-12 se agregó
@@ -10,8 +11,26 @@ from collections import deque
 from datetime import datetime, timedelta
 
 archivo_datos = "movies.json"
+archivo_usuarios = "usuarios.json"
 
 app = FastAPI()
+
+# Cargar usuarios
+def cargar_usuarios():
+    with open("usuarios.json", "r", encoding="utf-8") as f:
+        usuarios = json.load(f)
+
+    # Convertir los hashes de str → bytes para bcrypt
+    # Creamos un nuevo diccionario vacío
+    usuarios_bytes = {}
+
+    # Iteramos sobre cada par usuario-hash del diccionario original
+    for u, h in usuarios.items():
+    
+    # Guardamos en el nuevo diccionario
+        usuarios_bytes[u] = h.encode() # Convertimos el hash de string a bytes
+
+    return usuarios_bytes
 
 # Cargar datos
 def cargar_datos():
@@ -48,16 +67,12 @@ class Pelicula(BaseModel):
 
 security = HTTPBasic() 
 
-USUARIOS: Dict[str, str] = {
-    "ivan": "ivan123",
-    "user": "user_1", 
-    "u": "1"
-}
+USUARIOS = cargar_usuarios()
 
 # Autentificación de usuarios
 def verificar_credenciales(credenciales: HTTPBasicCredentials = Depends(security)) -> str: #Depends(security), llama a HTTPBasic() y pasa credenciales a la función
-    pwd_correcta = USUARIOS.get(credenciales.username)
-    if not pwd_correcta or not secrets.compare_digest(credenciales.password, pwd_correcta): #secrets.compare_digest() compara strings sin dar pistas de duración.
+    pwd_hash = USUARIOS.get(credenciales.username)
+    if not pwd_hash or not bcrypt.checkpw(credenciales.password.encode(), pwd_hash): # bcrypt.checkpw() compara la contraseña ingresada (bytes) con el hash almacenado (bytes)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas",
@@ -65,9 +80,9 @@ def verificar_credenciales(credenciales: HTTPBasicCredentials = Depends(security
         )
     return credenciales.username  # Devuelve el nombre del usuario autenticado
 
-# #-------------------------------------------------------------------------------
-# #Limitador
+#-------------------------------------------------------------------------------
 
+# #Limitador
 VENTANA = timedelta(seconds=1)   # Ventana de tiempo
 MAX_PETICIONES = 10             # Máximo de peticiones dentro de la ventana
 
@@ -96,6 +111,7 @@ async def limitador(request: Request, call_next):
     return respuesta
 
 #---------------------------------------------------------------------------
+
 # Existe película por su título y año  
 @app.get("/peliculas/{titulo}/{anio}")
 def existe_pelicula(titulo: str, anio: int):
