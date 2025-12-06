@@ -119,7 +119,7 @@ def existe_pelicula(titulo: str, anio: int):
 
     for pelicula in datos:
         if pelicula["title"].lower() == titulo.lower() and pelicula["year"] == anio:
-            return True
+            return pelicula #  CAMBIADO 
     return False
 
 

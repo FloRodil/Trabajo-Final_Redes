@@ -10,10 +10,8 @@ servidor_url = "http://127.0.0.1:8000"
 def existe_pelicula(titulo, anio):
     url = f"{servidor_url}/peliculas/{titulo}/{anio}"
     response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()   # devuelve True o False
-    else:
-        return False             # por si no existe el endpoint
+    return response.json()
+
 
 
 def ingresar_nombre_y_anio():
@@ -78,7 +76,11 @@ def borrar_pelicula(): #### Arreglar <<<
             print()
             print()
             anio = int(anio_str)
-            if existe_pelicula(titulo, anio):
+            #if existe_pelicula(titulo, anio):
+            #print (existe_pelicula(titulo, anio))
+            #cod_estado = existe_pelicula(titulo, anio).status_code
+            #if cod_estado == 200:
+            if existe_pelicula(titulo, anio) != False:
                 respuesta = input(4*" " + f"¿¿¿ Estás seguro de borrar: {titulo} del año: {anio} ??? - [s/n]: ")
                 if respuesta.lower() == "s": 
                     # respuesta = requests.delete(f"{servidor_url}/peliculas/", params = {"pelicula_titulo": titulo})
@@ -96,14 +98,11 @@ def borrar_pelicula(): #### Arreglar <<<
 
 def editar_pelicula(titulo: str, anio: int): # Funciona OK
 
-    resp = requests.get(f"{servidor_url}/peliculas/{titulo}/{anio}")
-
-    if resp.status_code != 200:
+    pelicula = existe_pelicula(titulo,anio)
+    if pelicula == False:
         print(4*" " + "Película no encontrada.")
         return
 
-    pelicula = resp.json()  # ← este será nuestro "payload"
-    
     print(4*" " + "\n=== EDITAR PELÍCULA ===")
     
     print(4*" " + f"Título actual: {pelicula['title']}")
