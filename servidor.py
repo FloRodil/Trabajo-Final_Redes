@@ -36,8 +36,10 @@ def cargar_usuarios():
 # Cargar datos
 def cargar_datos():
     with open(archivo_datos, "r", encoding="utf-8") as a:
-        #print(type(json.load(a)))
-        return json.load(a)
+        print(len(json.load(a)))
+        for clave, valor in json.load(a)[0]:
+            print(f"{clave}: {type(valor).__name__}")
+        #return json.load(a)
 
 
 # Guardar datos    
