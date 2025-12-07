@@ -1,8 +1,6 @@
 import requests
 import os
-# import getpass
-# from requests.auth import HTTPBasicAuth
-#from servidor import verificar_credenciales
+import getpass
 
 servidor_url = "http://127.0.0.1:8000"
 # servidor_url = "http://192.168.1.3:8000"
@@ -13,11 +11,27 @@ def existe_pelicula(titulo, anio):
     return response.json()
 
 
+def ingresar_nombre_y_anio(n_usuario, pws_usuario):
+    nombre_movie = input(4*" " + "Ingrese nombre de la película: ").strip()
+    if not nombre_movie:
+        print("    *** El nombre es obligatorio ***")
+        input("\nPresione ENTER para continuar...")
+        return None, None
 
-def ingresar_nombre_y_anio():
-    nombre_movie = input(4*" " + "Ingrese nombre de la película: ")
-    anio_movie = input(4*" " + "Ingrese año: ")
-    return (nombre_movie, anio_movie)
+    anio_movie = input(4*" " + "Ingrese año: ").strip()
+    if not anio_movie:
+        print("    *** El año es obligatorio ***")
+        input("\nPresione ENTER para continuar...")
+        return None, None
+
+    try:
+        anio_movie = int(anio_movie)
+    except ValueError:
+        print("    *** El año debe ser un número ***")
+        input("\nPresione ENTER para continuar...")
+        return None, None
+
+    return nombre_movie, anio_movie
 
 
 def obtener_peliculas():
@@ -25,13 +39,21 @@ def obtener_peliculas():
     return (respuesta.json())
 
 
-def obtener_pelicula():
+def obtener_ayuda():
+    respuesta = requests.get(f"{servidor_url}/ayuda")
+    if respuesta.status_code == 200:
+        data = respuesta.json()
+        return data["ayuda"]
+    return "Error obteniendo ayuda."
+
+
+def obtener_pelicula(n_usuario, pws_usuario):
     pelicula_titulo = input(4*" " + "Título de la película: ")
-    respuesta = requests.get(f"{servidor_url}/peliculas/" + pelicula_titulo)
+    respuesta = requests.get(f"{servidor_url}/peliculas/" + pelicula_titulo, auth=(n_usuario, pws_usuario))
     return (respuesta.json())
 
 
-def agregar_pelicula():
+def agregar_pelicula(n_usuario, pws_usuario):
     titulo = input(4*" " + "Ingresá el título: ")
     if titulo:
         anio = input(4*" " + "Ingresá el año: ")
@@ -54,21 +76,19 @@ def agregar_pelicula():
                 "thumbnail_width": 320, 
                 "thumbnail_height": 320}
             
-            respuesta = requests.post(f"{servidor_url}/peliculas/", json = pelicula)
+            respuesta = requests.post(f"{servidor_url}/peliculas/", json = pelicula, auth=(n_usuario, pws_usuario))
             return (respuesta.json())
         
         else:
             print()
             return(4*" " + "*** El año es un campo obligatorio ***")
-            # input("\nPresione ENTER para continuar...")
             
     else:
         print()
         return(4*" " + "*** El título es un campo obligatorio ***")
-        # input("\nPresione ENTER para continuar...")
         
     
-def borrar_pelicula(): #### Arreglar <<<
+def borrar_pelicula(n_usuario,pws_usuario):
     titulo = input(4*" " + "Ingrese el título de la película a borrar: ")
     if titulo:
         anio_str = input(4*" " + "Ingrese el año de la película a borrar: ")
@@ -76,17 +96,10 @@ def borrar_pelicula(): #### Arreglar <<<
             print()
             print()
             anio = int(anio_str)
-            #if existe_pelicula(titulo, anio):
-            #print (existe_pelicula(titulo, anio))
-            #cod_estado = existe_pelicula(titulo, anio).status_code
-            #if cod_estado == 200:
             if existe_pelicula(titulo, anio) != False:
                 respuesta = input(4*" " + f"¿¿¿ Estás seguro de borrar: {titulo} del año: {anio} ??? - [s/n]: ")
                 if respuesta.lower() == "s": 
-                    # respuesta = requests.delete(f"{servidor_url}/peliculas/", params = {"pelicula_titulo": titulo})
-                    respuesta = requests.delete(f"{servidor_url}/peliculas/", params = {"pelicula_titulo": titulo, "pelicula_anio": anio})
-                    # print("Status:", respuesta.status_code)
-                    # print("Texto:", respuesta.text)
+                    respuesta = requests.delete(f"{servidor_url}/peliculas/", params = {"pelicula_titulo": titulo, "pelicula_anio": anio}, auth=(n_usuario, pws_usuario))
                     return (respuesta.json())
                 else:
                     print()
@@ -96,9 +109,10 @@ def borrar_pelicula(): #### Arreglar <<<
         return(f"    El año es obligatorio.")
     return(f"    El nombre es obligatorio.")
 
-def editar_pelicula(titulo: str, anio: int): # Funciona OK
 
-    pelicula = existe_pelicula(titulo,anio)
+def editar_pelicula(titulo: str, anio: int, n_usuario, pws_usuario):
+
+    pelicula = existe_pelicula(titulo, anio)
     if pelicula == False:
         print(4*" " + "Película no encontrada.")
         return
@@ -140,7 +154,7 @@ def editar_pelicula(titulo: str, anio: int): # Funciona OK
     pelicula["thumbnail_width"] = 320
     pelicula["thumbnail_height"] = 320
 
-    r = requests.put(f"{servidor_url}/peliculas/{titulo}/{anio}", json=pelicula)
+    r = requests.put(f"{servidor_url}/peliculas/{titulo}/{anio}", json=pelicula, auth=(n_usuario, pws_usuario))
 
     if r.status_code == 200:
         print(4*" " + "Película actualizada correctamente.")
@@ -154,7 +168,6 @@ def limpiar_pantalla():
 
 def menu_inicial():
     limpiar_pantalla()
-    # print(os.name)
     print()
     print(3*" " + "┌" + 55*"─" + "┐")
     print(3*" " + "│" + 3*" " + "MENU" + 34*" " + "\033[3m(invitado)\033[0m" + 4*" " + "│")
@@ -172,12 +185,17 @@ def menu_inicial():
     opcion = input(4*" " + "Ingrese el número de la opción seleccionada: ")
     if opcion == "1":
         print(obtener_peliculas())
+        input("\nPresione ENTER para continuar...")
+        menu_inicial()
 
     elif opcion == "2":
         acceder()
 
     elif opcion == "?":
-        return ""
+        limpiar_pantalla()
+        print(obtener_ayuda())
+        input("\nPresione ENTER para continuar...")
+        menu_inicial()
 
     elif opcion.lower() == "x":
         print("\n    Saliendo de la api...")
@@ -204,13 +222,12 @@ def acceder():
         print(3*" " + "└" + 55*"─" + "┘")
         print()
         usuario_str = input(4*" " + "Usuario: ")
-        pass_str = input(4*" " + "Contraseña: ")
+        pass_str = getpass.getpass(4*" " + "Contraseña: ")
         print()
         respuesta = requests.get(f"{servidor_url}/protegido", auth=(usuario_str, pass_str))
  
         if respuesta.status_code == 200:
-            menu_ppal(usuario_str)
-            # print(respuesta)
+            menu_ppal(usuario_str, pass_str)
             return
             
         intentos -= 1
@@ -219,12 +236,13 @@ def acceder():
         print(4*" " + f"***   Quedan: {intentos} intento/s restante/s   ***")
         print(4*" " + 42*"*")
         print()
-        os.system("pause")
+        input("\nPresione ENTER para continuar...")
     print(4*" " + '*** ERROR ***')
 
-def menu_ppal(n_usuario):
 
-    while True:  # ← bucle principal del menú
+def menu_ppal(n_usuario,pws_usuario):
+
+    while True:  # Bucle principal del menú
 
         limpiar_pantalla()
         print()
@@ -235,7 +253,7 @@ def menu_ppal(n_usuario):
         print(3*" " + "│" + 55*" " + "│")
         print(3*" " + "│" + 3*" " + "1 - Obtener datos de todas las películas" + 12*" " + "│")
         print(3*" " + "│" + 3*" " + "2 - Obtener datos de una película por su título" + 5*" " + "│")
-        print(3*" " + "│" + 3*" " + "3 - Agregar película" + 32*" " + "│")
+        print(3*" " + "│" + 3*" " + "3 - Agregar una película" + 28*" " + "│")
         print(3*" " + "│" + 3*" " + "4 - Editar datos de una película" + 20*" " + "│")
         print(3*" " + "│" + 3*" " + "5 - Borrar una película" + 29*" " + "│")
         print(3*" " + "│" + 55*" " + "│")
@@ -253,20 +271,21 @@ def menu_ppal(n_usuario):
             input("\nPresione ENTER para continuar...")
 
         elif opcion == "2":
-            print(obtener_pelicula())
+            print(obtener_pelicula(n_usuario, pws_usuario))
             input("\nPresione ENTER para continuar...")
 
         elif opcion == "3":
-            print(agregar_pelicula())
+            print(agregar_pelicula(n_usuario, pws_usuario))
             input("\nPresione ENTER para continuar...")
 
         elif opcion == "4":
-            nombre, anio = ingresar_nombre_y_anio()
-            editar_pelicula(nombre, anio)
-            input("\nPresione ENTER para continuar...")
+            nombre, anio = ingresar_nombre_y_anio(n_usuario, pws_usuario)
+            if nombre is not None and anio is not None:
+                editar_pelicula(nombre, anio, n_usuario, pws_usuario)
+                input("\nPresione ENTER para continuar...")
 
         elif opcion == "5":
-            print(borrar_pelicula())
+            print(borrar_pelicula(n_usuario,pws_usuario))
             input("\nPresione ENTER para continuar...")
 
         elif opcion == "6":
@@ -275,12 +294,11 @@ def menu_ppal(n_usuario):
 
         elif opcion.lower() == "x":
             print("\n    Saliendo de la api...")
-            break  # ← rompe el bucle y sale del menú
+            break
 
         else:
             print(4*" " + "Opción no válida")
             input("\nPresione ENTER para continuar...")
-
 
 
 if __name__ =="__main__":

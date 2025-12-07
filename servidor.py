@@ -1,17 +1,17 @@
 import json
 import uvicorn
-import secrets
-import bcrypt #transforma string en hashes
-from fastapi import FastAPI, HTTPException, Depends, status, Request #1-12 se agregó Depends y status
-# from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials #1-12 se agregó
-from typing import Optional, Dict, Deque #1-12 se agregó Dict
-from pydantic import BaseModel # valida, convierte y estructura datos JSON -> en objeto de la clase y el objeto en diccionario
+#import secrets
+import bcrypt
+from fastapi import FastAPI, HTTPException, Depends, status, Request
+from fastapi.security import HTTPBasic, HTTPBasicCredentials 
+from typing import Optional, Dict, Deque
+from pydantic import BaseModel
 from collections import deque
 from datetime import datetime, timedelta
 
 archivo_datos = "movies.json"
 archivo_usuarios = "usuarios.json"
+archivo_ayuda = "ayuda.json"
 
 app = FastAPI()
 
@@ -20,25 +20,22 @@ def cargar_usuarios():
     with open("usuarios.json", "r", encoding="utf-8") as f:
         usuarios = json.load(f)
 
-    # Convertir los hashes de str → bytes para bcrypt
-    # Creamos un nuevo diccionario vacío
     usuarios_bytes = {}
 
-    # Iteramos sobre cada par usuario-hash del diccionario original
     for u, h in usuarios.items():
-    
-    # Guardamos en el nuevo diccionario
-        usuarios_bytes[u] = h.encode() # Convertimos el hash de string a bytes
-
+        usuarios_bytes[u] = h.encode()
     return usuarios_bytes
 
 # Cargar datos
 def cargar_datos():
     with open(archivo_datos, "r", encoding="utf-8") as a:
-        #print(type(json.load(a)))
         return json.load(a)
 
-
+#Cargar ayuda
+def cargar_ayuda():
+    with open(archivo_ayuda, "r", encoding="utf-8") as a:
+        return json.load(a)
+    
 # Guardar datos    
 def guardar_datos(datos):
     with open(archivo_datos, "w", encoding="utf-8") as a:
@@ -49,9 +46,7 @@ def guardar_datos(datos):
 class Pelicula(BaseModel):
     title: str
     year: int
-    # cast: Optional[list] = None
     cast: Optional[list] = []
-    # genres: Optional[list] = None
     genres: Optional[list] = []
     href: Optional[str] = None
     extract: Optional[str] = None
@@ -59,41 +54,34 @@ class Pelicula(BaseModel):
     thumbnail_width: Optional[int] = 320
     thumbnail_height: Optional[int] = 320
 
-# -------Agregado 1-12 -------------------------------------------------------
-
-# HTTPBasic() dependencia de Fastapli que detecta si 
-# el request trae el encabezado HTTP Authorization: Basic <credenciales_base64>
-# Decodifica ese Base64 y obtiene username y password
-
 security = HTTPBasic() 
 
 USUARIOS = cargar_usuarios()
 
+
 # Autentificación de usuarios
-def verificar_credenciales(credenciales: HTTPBasicCredentials = Depends(security)) -> str: #Depends(security), llama a HTTPBasic() y pasa credenciales a la función
+def verificar_credenciales(credenciales: HTTPBasicCredentials = Depends(security)) -> str: 
     pwd_hash = USUARIOS.get(credenciales.username)
-    if not pwd_hash or not bcrypt.checkpw(credenciales.password.encode(), pwd_hash): # bcrypt.checkpw() compara la contraseña ingresada (bytes) con el hash almacenado (bytes)
+    if not pwd_hash or not bcrypt.checkpw(credenciales.password.encode(), pwd_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas",
             headers={"WWW-Authenticate": "Basic"},
         )
-    return credenciales.username  # Devuelve el nombre del usuario autenticado
+    return credenciales.username
 
-#-------------------------------------------------------------------------------
-
-# #Limitador
+#Limitador
 VENTANA = timedelta(seconds=1)   # Ventana de tiempo
 MAX_PETICIONES = 10             # Máximo de peticiones dentro de la ventana
 
-cubos_ip: Dict[str, Deque[datetime]] = {} #diccionario ip_cliente: cola con timestamps de sus peticiones
+cubos_ip: Dict[str, Deque[datetime]] = {}
 
 @app.middleware("http")
 async def limitador(request: Request, call_next):
-    ip = request.client.host #ip_cliente
-    ahora = datetime.utcnow() #timestamp actual
+    ip = request.client.host 
+    ahora = datetime.utcnow() 
 
-    cubo = cubos_ip.setdefault(ip, deque()) #si la ip existe devuelve su cola sino crea una vacía
+    cubo = cubos_ip.setdefault(ip, deque())
 
     # Eliminar timestamps fuera de la ventana
     while cubo and (ahora - cubo[0]) > VENTANA:
@@ -106,11 +94,10 @@ async def limitador(request: Request, call_next):
             detail="Demasiadas solicitudes: límite 10 req/s",
         )
 
-    cubo.append(ahora) #registra la peticion actual
-    respuesta = await call_next(request) #continua el proceso
+    cubo.append(ahora)
+    respuesta = await call_next(request)
     return respuesta
 
-#---------------------------------------------------------------------------
 
 # Existe película por su título y año  
 @app.get("/peliculas/{titulo}/{anio}")
@@ -119,7 +106,7 @@ def existe_pelicula(titulo: str, anio: int):
 
     for pelicula in datos:
         if pelicula["title"].lower() == titulo.lower() and pelicula["year"] == anio:
-            return pelicula #  CAMBIADO 
+            return pelicula
     return False
 
 
@@ -134,9 +121,15 @@ def mostrar_peliculas():
     return cargar_datos()
 
 
+# Obtener ayuda
+@app.get("/ayuda")
+def mostrar_ayuda():
+    return cargar_ayuda()
+
+
 # Obtener una película por su título
 @app.get("/peliculas/{pelicula_titulo}")
-def mostrar_pelicula(pelicula_titulo: str):
+def mostrar_pelicula(pelicula_titulo: str, usuario: str = Depends(verificar_credenciales)):
     datos = cargar_datos()
     coincidencias = []
 
@@ -152,7 +145,6 @@ def mostrar_pelicula(pelicula_titulo: str):
                 + margen + f"Géneros: {', '.join(pelicula['genres']) if pelicula['genres'] else no_disp}\n"
                 + margen + f"Elenco: {', '.join(pelicula['cast']) if pelicula['cast'] else no_disp}\n"
                 + margen + f"Href: {pelicula['href']  if pelicula['href'] else no_disp}\n"
-                # + 4* " " + f"{'-'*55}\n"
             )
 
             coincidencias.append(texto)
@@ -164,7 +156,7 @@ def mostrar_pelicula(pelicula_titulo: str):
 
 # Obtener una película por su título y año  
 @app.get("/peliculas/{titulo}/{anio}")
-def obtener_pelicula(titulo: str, anio: int):
+def obtener_pelicula(titulo: str, anio: int, usuario: str = Depends(verificar_credenciales)):
     datos = cargar_datos()
 
     for pelicula in datos:
@@ -176,32 +168,28 @@ def obtener_pelicula(titulo: str, anio: int):
 
 # Agregar una nueva película
 @app.post("/peliculas")
-#def agregar_pelicula(pelicula: Pelicula, usuario: str = Depends(verificar_credenciales)):
-def agregar_pelicula(pelicula: Pelicula):
+def agregar_pelicula(pelicula: Pelicula, usuario: str = Depends(verificar_credenciales)):
     datos = cargar_datos()
-    datos.append(pelicula.model_dump()) # el método model.dump() es necesario para transformar el objeto película en un diccionario
+    datos.append(pelicula.model_dump())
     guardar_datos(datos)
     return(f"\n    Película '{pelicula.title}' agregada EXITOSAMENTE.")
 
-    
+
 # Borrar película por título y año
 @app.delete("/peliculas")
-#def borrar_pelicula(pelicula_titulo: str, usuario: str = Depends(verificar_credenciales)):
-def borrar_pelicula(pelicula_titulo: str, pelicula_anio: int):
+def borrar_pelicula(pelicula_titulo: str, pelicula_anio: int, usuario: str = Depends(verificar_credenciales)):
     datos = cargar_datos()
     for pelicula in datos:
         if pelicula["title"].lower() == pelicula_titulo.lower() and pelicula["year"] == pelicula_anio:
-            # print(pelicula["title"].lower())
+            eliminada = pelicula["title"]
             datos.remove(pelicula)
             guardar_datos(datos)
-            return {"mensaje": "*** Película '{pelicula['title']}' BORRADA EXITOSAMENTE. ***"}
-
-    # return(4*" " + f"Película {pelicula_titulo} no encontrada...")
+            return {"mensaje": f"*** Película '{eliminada}' BORRADA EXITOSAMENTE. ***"}
 
 
 # Editar película por título y año
 @app.put("/peliculas/{titulo}/{anio}")
-def actualizar_pelicula(titulo: str, anio: int, cambios: Pelicula):
+def actualizar_pelicula(titulo: str, anio: int, cambios: Pelicula, usuario: str = Depends(verificar_credenciales)):
     datos = cargar_datos()
 
     for pelicula in datos:
@@ -229,8 +217,5 @@ def actualizar_pelicula(titulo: str, anio: int, cambios: Pelicula):
     raise HTTPException(status_code=404, detail="Película no encontrada")
 
 
-
-
 if __name__=="__main__":
-    #cargar_datos()
     uvicorn.run("servidor:app", host="0.0.0.0", port=8000, reload=True)
